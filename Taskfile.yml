@@ -1,0 +1,14 @@
+version: '2'
+output: 'prefixed'
+
+includes:
+  _: https://raw.githubusercontent.com/FasterArbeit/task/master/go.yml
+
+vars:
+  BINARY_NAME: 'on'
+
+tasks:
+  bin:
+    desc: Build the go binary
+    cmds:
+      - CGO_ENABLED=0 go build -a -ldflags "-extldflags '-static' -s -w" -o ci-build/{{.BINARY_NAME}} main.go
