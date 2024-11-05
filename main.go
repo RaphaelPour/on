@@ -17,8 +17,7 @@ var (
 	remove = flag.Bool("remove", false, "React on remove")
 	chmod  = flag.Bool("chmod", false, "React on chmod")
 
-	verbose = flag.Bool("verbose", false, "Print debug information")
-
+	verbose     = flag.Bool("verbose", false, "Print debug information")
 	listenToAll = false
 )
 
@@ -48,9 +47,6 @@ func main() {
 		fmt.Println("usage: on [--create] [--write] [--rename] [--remove] [--chmod] <file> <cmd...>")
 		return
 	}
-
-	Debugf("os.Args: %#v\n", os.Args)
-	Debugf("flag.Args: %#v\n", flag.Args())
 
 	ops := make([]fsnotify.Op, 0)
 	if *create {
