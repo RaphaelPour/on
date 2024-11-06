@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -17,8 +19,16 @@ var (
 	remove = flag.Bool("remove", false, "React on remove")
 	chmod  = flag.Bool("chmod", false, "React on chmod")
 
+	debounceTimeout = flag.Duration(
+		"debounce-timeout",
+		100*time.Millisecond,
+		"Time to wait after last event to execute command. Useful for debouncing often occuring events.",
+	)
+
 	verbose     = flag.Bool("verbose", false, "Print debug information")
 	listenToAll = false
+
+	debounceMap = sync.Map{}
 )
 
 func ArrayHas[K comparable](arr []K, s K) bool {
@@ -40,11 +50,20 @@ func Debugf(format string, args ...any) {
 	fmt.Printf(format, args...)
 }
 
+func run(command string, args ...string) {
+	cmd := exec.Command(command, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	_ = cmd.Run()
+}
+
 func main() {
 	flag.Parse()
 
 	if len(flag.Args()) < 2 {
-		fmt.Println("usage: on [--create] [--write] [--rename] [--remove] [--chmod] <file> <cmd...>")
+		fmt.Println("usage: on [--create] [--write] [--rename] [--remove] [--chmod] [--debounce-timeout=<duration>] <file> <cmd...>")
 		return
 	}
 
@@ -100,12 +119,32 @@ func main() {
 				continue
 			}
 
-			cmd := exec.Command(flag.Args()[1], flag.Args()[2:]...)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			cmd.Stdin = os.Stdin
+			if *debounceTimeout <= 0 {
+				run(flag.Args()[1], flag.Args()[2:]...)
+				continue
+			}
 
-			_ = cmd.Run()
+			if t, found := debounceMap.Load(event.Name); found {
+				timer, ok := t.(*time.Timer)
+				if !ok {
+					fmt.Printf(
+						"unknown map value type %T, expected timer\n",
+						timer,
+					)
+					return
+				}
+
+				Debugf("reset timer for event %q", event)
+				timer.Reset(*debounceTimeout)
+				continue
+			}
+
+			Debugf("add timer for event %q", event)
+			debounceMap.Store(event.Name, time.AfterFunc(*debounceTimeout, func() {
+				defer debounceMap.Delete(event.Name)
+				run(flag.Args()[1], flag.Args()[2:]...)
+			}))
+
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				return
