@@ -52,4 +52,4 @@ received CHMOD         "./main.go"
 ## Limitations
 
 - given file needs to have a path, at least `./`
-- events are not debounced, typically writes appear in masses 
+- ~~events are not debounced, typically writes appear in masses~~ added with https://github.com/RaphaelPour/on/pull/1
