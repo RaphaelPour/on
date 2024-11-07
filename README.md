@@ -1,6 +1,6 @@
 # on
 
-Run command on file event. Like `watch` but for file changes.
+Run command on file event. Like `watch` but for file changes. [↗️Related blog article](https://evilcookie.de/on-run-commands-on-file-event.html).
 
 ## Getting started
 
