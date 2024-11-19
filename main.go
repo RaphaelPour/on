@@ -13,11 +13,12 @@ import (
 )
 
 var (
-	create = flag.Bool("create", false, "React on create")
-	write  = flag.Bool("write", false, "React on write")
-	rename = flag.Bool("rename", false, "React on rename")
-	remove = flag.Bool("remove", false, "React on remove")
-	chmod  = flag.Bool("chmod", false, "React on chmod")
+	create      = flag.Bool("create", false, "React on create")
+	write       = flag.Bool("write", false, "React on write")
+	rename      = flag.Bool("rename", false, "React on rename")
+	remove      = flag.Bool("remove", false, "React on remove")
+	chmod       = flag.Bool("chmod", false, "React on chmod")
+	clearScreen = flag.Bool("clear-screen", true, "Clear screen before each command execution")
 
 	debounceTimeout = flag.Duration(
 		"debounce-timeout",
@@ -51,6 +52,10 @@ func Debugf(format string, args ...any) {
 }
 
 func run(command string, args ...string) {
+	if *clearScreen {
+		fmt.Println("\033[2J")
+	}
+
 	cmd := exec.Command(command, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -63,7 +68,7 @@ func main() {
 	flag.Parse()
 
 	if len(flag.Args()) < 2 {
-		fmt.Println("usage: on [--create] [--write] [--rename] [--remove] [--chmod] [--debounce-timeout=<duration>] <file> <cmd...>")
+		fmt.Println("usage: on [--create] [--write] [--rename] [--remove] [--chmod] [--debounce-timeout=<duration>] [--clear-screen] <file> <cmd...>")
 		return
 	}
 
